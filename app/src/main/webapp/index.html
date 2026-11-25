@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restaurant Review Platform</title>
+    <meta name="description" content="Read reviews, rate restaurants and save your favorites.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..600&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="./">Restaurant Review</a>
+            <nav class="tabs" aria-label="Views">
+                <button type="button" class="tab" id="tab-all" aria-current="page">All restaurants</button>
+                <button type="button" class="tab" id="tab-favorites" hidden>My favorites</button>
+            </nav>
+            <div class="account" id="account"></div>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1 id="page-title">Restaurants</h1>
+        <p class="lede" id="page-lede">Read what diners think, rate the places you have been to and save your favorites.</p>
+
+        <form class="filters" id="filters" role="search" autocomplete="off">
+            <label class="field grow">
+                <span>Search</span>
+                <input type="search" id="f-q" placeholder="Name, cuisine or city">
+            </label>
+            <label class="field">
+                <span>Cuisine</span>
+                <select id="f-cuisine"><option value="">Any</option></select>
+            </label>
+            <label class="field">
+                <span>City</span>
+                <select id="f-city"><option value="">Any</option></select>
+            </label>
+            <button type="button" class="btn btn-primary" id="btn-add">Add restaurant</button>
+        </form>
+
+        <p class="count" id="count" aria-live="polite"></p>
+        <ol class="menu" id="list"></ol>
+        <div class="more" id="more"></div>
+    </main>
+
+    <!-- Sign in / create account -->
+    <dialog id="dlg-auth" aria-labelledby="auth-title">
+        <div class="dlg-head">
+            <h2 id="auth-title">Sign in</h2>
+            <button type="button" class="btn-close" data-close>Close</button>
+        </div>
+        <div class="seg" role="tablist" aria-label="Account">
+            <button type="button" role="tab" id="seg-login" aria-selected="true">Sign in</button>
+            <button type="button" role="tab" id="seg-register" aria-selected="false">Create account</button>
+        </div>
+        <p class="notice" id="auth-notice" role="status" hidden></p>
+        <form id="form-login" class="stack" novalidate>
+            <label class="field"><span>Username</span><input name="username" autocomplete="username" required></label>
+            <label class="field"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label>
+            <p class="form-error" role="alert"></p>
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+        <form id="form-register" class="stack" novalidate hidden>
+            <label class="field"><span>Username</span><input name="username" autocomplete="username" required>
+                <small>3 to 50 characters: letters, digits or underscore.</small></label>
+            <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+            <label class="field"><span>Password</span><input name="password" type="password" autocomplete="new-password" required>
+                <small>At least 8 characters.</small></label>
+            <p class="form-error" role="alert"></p>
+            <button type="submit" class="btn btn-primary">Create account</button>
+        </form>
+    </dialog>
+
+    <!-- Add restaurant -->
+    <dialog id="dlg-add" aria-labelledby="add-title">
+        <div class="dlg-head">
+            <h2 id="add-title">Add a restaurant</h2>
+            <button type="button" class="btn-close" data-close>Close</button>
+        </div>
+        <form id="form-add" class="stack" novalidate>
+            <label class="field"><span>Name</span><input name="name" maxlength="100" required></label>
+            <div class="row">
+                <label class="field grow"><span>Cuisine</span><input name="cuisine" maxlength="50" required></label>
+                <label class="field"><span>Price level</span>
+                    <select name="priceRange">
+                        <option value="1">$ Inexpensive</option>
+                        <option value="2" selected>$$ Moderate</option>
+                        <option value="3">$$$ Expensive</option>
+                        <option value="4">$$$$ Very expensive</option>
+                    </select>
+                </label>
+            </div>
+            <label class="field"><span>City</span><input name="city" maxlength="80" required></label>
+            <label class="field"><span>Address</span><input name="address" maxlength="150" required></label>
+            <p class="form-error" role="alert"></p>
+            <button type="submit" class="btn btn-primary">Add restaurant</button>
+        </form>
+    </dialog>
+
+    <!-- Restaurant detail -->
+    <dialog id="dlg-detail" class="wide" aria-labelledby="detail-title">
+        <div id="detail"></div>
+    </dialog>
+
+    <div class="toast" id="toast" popover="manual" role="status" aria-live="polite"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Maven file that only exists so that the pipeline can build the WAR.
+  Copy it to the ROOT of the Eclipse project (next to src/) and keep it.
+  Eclipse keeps working as usual; you can ignore it when you export the WAR by hand.
+  It assumes the default layout of an Eclipse Dynamic Web Project:
+      src/main/java      -> Java code
+      src/main/webapp    -> web content (WEB-INF, ...)
+  If your folders have other names, change <sourceDirectory> and <warSourceDirectory>.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.restaurantreview</groupId>
+    <artifactId>RestaurantReviewAPI</artifactId>
+    <version>1.0.0</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+    </properties>
+
+    <dependencies>
+        <!-- Provided by GlassFish at run time, only needed to compile -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>11.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- MySQL driver. If you already copied mysql-connector-j.jar to WEB-INF/lib,
+             delete one of the two so the driver is not packaged twice. -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- The WAR is called RestaurantReviewAPI.war, so the URL stays /RestaurantReviewAPI/api -->
+        <finalName>RestaurantReviewAPI</finalName>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <warSourceDirectory>src/main/webapp</warSourceDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

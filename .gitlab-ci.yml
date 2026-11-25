@@ -1,0 +1,98 @@
+# =====================================================================
+# GitLab pipeline: build the WAR, test the database and test the REST API.
+# If ANY test fails, the job fails and the pipeline is marked as failed
+# (the merge request cannot be merged while it is red).
+#
+# Expected repository layout (adapt the paths if yours is different):
+#   pom.xml                       <- copy of ci/pom.xml, only for the pipeline
+#   src/main/java, src/main/webapp
+#   database/restaurant_review_schema.sql
+#   db-tests/*.sql
+#   api-tests/                    <- Maven project with the JUnit + RestAssured tests
+#   ci/run_db_tests.sh
+#
+# PREREQUISITE: the API must read the database URL, user, password and the
+# JWT secret from the variables DB_URL, DB_USER, DB_PASSWORD and JWT_SECRET
+# (the "move the secrets out of the code" step). Without it the API would try to
+# connect to localhost with the password that is written in the code.
+# =====================================================================
+
+stages:
+  - build
+  - database-tests
+  - api-tests
+
+image: maven:3.9-eclipse-temurin-21
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  GLASSFISH_VERSION: "8.0.0"
+  # Throwaway values that only exist inside the CI containers
+  MYSQL_DATABASE: restaurant_review_db
+  MYSQL_ROOT_PASSWORD: ci_root_password_only
+  MYSQL_USER: dev
+  MYSQL_PASSWORD: ci_dev_password_only
+  DB_URL: "jdbc:mysql://mysql:3306/restaurant_review_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  DB_USER: dev
+  DB_PASSWORD: ci_dev_password_only
+  JWT_SECRET: "ci-only-secret-with-more-than-32-characters-0123456789"
+
+cache:
+  paths:
+    - .m2/repository
+
+# ---------------------------------------------------------------------
+build-war:
+  stage: build
+  script:
+    - mvn -B -q package -DskipTests
+  artifacts:
+    paths:
+      - target/RestaurantReviewAPI.war
+    expire_in: 1 day
+
+# ---------------------------------------------------------------------
+# Database state tests: empty tables, edge cases, constraints, massive data
+database-tests:
+  stage: database-tests
+  needs: []
+  services:
+    - name: mysql:8.4
+      alias: mysql
+  variables:
+    MYSQL_HOST: mysql
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq mysql-client > /dev/null
+    - until mysqladmin ping --host=mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --silent; do echo "waiting for MySQL..."; sleep 2; done
+  script:
+    - bash ci/run_db_tests.sh
+
+# ---------------------------------------------------------------------
+# REST tests: starts MySQL + GlassFish, deploys the WAR and runs JUnit/RestAssured
+rest-api-tests:
+  stage: api-tests
+  needs: [build-war]
+  services:
+    - name: mysql:8.4
+      alias: mysql
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq mysql-client unzip > /dev/null
+    - until mysqladmin ping --host=mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --silent; do echo "waiting for MySQL..."; sleep 2; done
+    - mysql --host=mysql --user=root --password="$MYSQL_ROOT_PASSWORD" < database/restaurant_review_schema.sql
+    # GlassFish from Maven Central
+    - mvn -B -q dependency:copy -Dartifact=org.glassfish.main.distributions:glassfish:${GLASSFISH_VERSION}:zip -DoutputDirectory=/opt
+    - unzip -q /opt/glassfish-${GLASSFISH_VERSION}.zip -d /opt
+    - export ASADMIN=/opt/glassfish8/bin/asadmin
+    - $ASADMIN start-domain
+    - $ASADMIN deploy --contextroot RestaurantReviewAPI target/RestaurantReviewAPI.war
+  script:
+    - cd api-tests
+    - mvn -B test -Dapi.baseUrl=http://localhost:8080/RestaurantReviewAPI/api
+  after_script:
+    - tail -n 100 /opt/glassfish8/glassfish/domains/domain1/logs/server.log || true
+  artifacts:
+    when: always
+    paths:
+      - api-tests/target/surefire-reports/
+    reports:
+      junit: api-tests/target/surefire-reports/TEST-*.xml

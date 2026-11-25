@@ -1,0 +1,30 @@
+# Secrets and credentials
+*.pem
+.env
+*.key
+preflight_report.json
+
+# Build output
+target/
+bin/
+build/
+*.class
+*.war
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Eclipse and editors
+.settings/
+.classpath
+.project
+.metadata/
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
